@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#CC101010"
+    android:padding="10dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="909 MACRO"
+        android:textColor="#FF4444"
+        android:textStyle="bold"
+        android:paddingBottom="6dp"/>
+
+    <Button
+        android:id="@+id/btnAkm"
+        android:layout_width="140dp"
+        android:layout_height="48dp"
+        android:text="AKM HOLD"
+        android:textSize="12sp"/>
+
+    <Button
+        android:id="@+id/btnM14"
+        android:layout_width="140dp"
+        android:layout_height="48dp"
+        android:text="M14 HOLD"
+        android:textSize="12sp"/>
+
+    <Button
+        android:id="@+id/btnRec"
+        android:layout_width="140dp"
+        android:layout_height="48dp"
+        android:text="REC / STOP"
+        android:textSize="12sp"/>
+
+    <Button
+        android:id="@+id/btnHide"
+        android:layout_width="140dp"
+        android:layout_height="40dp"
+        android:text="HIDE"
+        android:textSize="11sp"/>
+</LinearLayout>
