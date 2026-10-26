@@ -14,13 +14,8 @@ class TouchAccessibilityService : AccessibilityService() {
     }
 
     private val handler = Handler(Looper.getMainLooper())
-    private var recoilJob: Runnable? = null
-
-    var fireX = 1800f
-    var fireY = 900f
-
-    var originX = 540f
-    var originY = 1200f
+    private var isAutoFiring = false
+    private var currentGun = Gun.AKM
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -28,55 +23,66 @@ class TouchAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
-    override fun onInterrupt() { stopRecoil() }
+    override fun onInterrupt() { stopAuto() }
 
     override fun onDestroy() {
         instance = null
         super.onDestroy()
     }
 
-    fun tap(x: Float, y: Float, ms: Long = 35L) {
-        val path = Path().apply { moveTo(x, y) }
-        val g = GestureDescription.Builder()
-            .addStroke(GestureDescription.StrokeDescription(path, 0L, ms))
-            .build()
-        dispatchGesture(g, null, null)
+    fun toggleAuto(gun: Gun) {
+        if (isAutoFiring && currentGun == gun) {
+            stopAuto()
+        } else {
+            startAuto(gun)
+        }
     }
 
-    fun startRecoil(gun: Gun) {
-        stopRecoil()
-        val curve = RecoilCurves.forGun(gun)
+    private fun startAuto(gun: Gun) {
+        stopAuto()
+        currentGun = gun
+        isAutoFiring = true
 
-        recoilJob = object : Runnable {
+        val curve = RecoilCurves.forGun(gun)
+        val originX = 540f
+        val originY = 1200f
+
+        val runnable = object : Runnable {
             private var index = 0
             private var curX = originX
             private var curY = originY
 
             override fun run() {
-                if (index >= curve.size) return
+                if (!isAutoFiring) return
 
-                val step = curve[index]
-                curX += step.x
-                curY += step.y
+                if (index < curve.size) {
+                    val step = curve[index]
+                    curX += step.x
+                    curY += step.y
 
-                val path = Path().apply {
-                    moveTo(curX - step.x, curY - step.y)
-                    lineTo(curX, curY)
+                    val path = Path().apply {
+                        moveTo(curX - step.x, curY - step.y)
+                        lineTo(curX, curY)
+                    }
+                    val g = GestureDescription.Builder()
+                        .addStroke(GestureDescription.StrokeDescription(path, 0L, 60L))
+                        .build()
+                    dispatchGesture(g, null, null)
+
+                    index++
+                    handler.postDelayed(this, 60L)
+                } else {
+                    index = 0
+                    curX = originX
+                    curY = originY
+                    handler.postDelayed(this, 200L)
                 }
-                val g = GestureDescription.Builder()
-                    .addStroke(GestureDescription.StrokeDescription(path, 0L, 70L))
-                    .build()
-                dispatchGesture(g, null, null)
-
-                index++
-                handler.postDelayed(this, 80L)
             }
         }
-        handler.post(recoilJob!!)
+        handler.post(runnable)
     }
 
-    fun stopRecoil() {
-        recoilJob?.let { handler.removeCallbacks(it) }
-        recoilJob = null
+    fun stopAuto() {
+        isAutoFiring = false
     }
 }
