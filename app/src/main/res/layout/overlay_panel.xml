@@ -32,7 +32,7 @@
         android:id="@+id/btnRec"
         android:layout_width="140dp"
         android:layout_height="48dp"
-        android:text="REC / STOP"
+        android:text="STOP"
         android:textSize="12sp"/>
 
     <Button
