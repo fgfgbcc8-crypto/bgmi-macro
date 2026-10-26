@@ -30,6 +30,7 @@ class TouchAccessibilityService : AccessibilityService() {
         super.onDestroy()
     }
 
+    // تفعيل أو إيقاف الأتمتة
     fun toggleAuto(gun: Gun) {
         if (isAutoFiring && currentGun == gun) {
             stopAuto()
@@ -55,6 +56,7 @@ class TouchAccessibilityService : AccessibilityService() {
             override fun run() {
                 if (!isAutoFiring) return
 
+                // هنا بنعمل نبضات سحب (سحب سريع ورفع إيد عشان الشاشة متعلقش)
                 if (index < curve.size) {
                     val step = curve[index]
                     curX += step.x
@@ -65,17 +67,18 @@ class TouchAccessibilityService : AccessibilityService() {
                         lineTo(curX, curY)
                     }
                     val g = GestureDescription.Builder()
-                        .addStroke(GestureDescription.StrokeDescription(path, 0L, 60L))
+                        .addStroke(GestureDescription.StrokeDescription(path, 0L, 50L)) // 50 مللي ثانية
                         .build()
                     dispatchGesture(g, null, null)
 
                     index++
                     handler.postDelayed(this, 60L)
                 } else {
+                    // رجوع للأصل
                     index = 0
                     curX = originX
                     curY = originY
-                    handler.postDelayed(this, 200L)
+                    handler.postDelayed(this, 150L)
                 }
             }
         }
