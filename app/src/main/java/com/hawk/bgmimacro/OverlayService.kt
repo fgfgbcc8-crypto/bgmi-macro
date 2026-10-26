@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
@@ -14,18 +15,23 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.TextView
 
 class OverlayService : Service() {
 
     private lateinit var wm: WindowManager
     private lateinit var panel: View
     private lateinit var params: WindowManager.LayoutParams
+    private lateinit var floatBtn: TextView
+    private lateinit var floatParams: WindowManager.LayoutParams
 
     override fun onCreate() {
         super.onCreate()
         startForeground(1, buildNotification())
 
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
+        
+        // لوحة التحكم الأساسية
         panel = LayoutInflater.from(this).inflate(R.layout.overlay_panel, null)
 
         params = WindowManager.LayoutParams(
@@ -44,49 +50,81 @@ class OverlayService : Service() {
         }
 
         wm.addView(panel, params)
-        makeDraggable()
+        makeDraggable(panel, params)
+
+        // الزرار الشفاف
+        floatBtn = TextView(this).apply {
+            text = "F"
+            setTextColor(Color.WHITE)
+            textSize = 18f
+            setBackgroundColor(Color.parseColor("#55000000")) // شفاف
+            setPadding(30, 30, 30, 30)
+        }
+        
+        floatParams = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            else
+                WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            x = 800 // مكان مبدئي
+            y = 1500 // مكان مبدئي
+        }
+
+        wm.addView(floatBtn, floatParams)
+        makeDraggable(floatBtn, floatParams)
+
+        // ربط الزرار الشفاف بالأتمتة
+        floatBtn.setOnClickListener {
+            TouchAccessibilityService.instance?.toggleAuto(Gun.AKM)
+            if (floatBtn.text == "F") {
+                floatBtn.text = "ON"
+                floatBtn.setBackgroundColor(Color.parseColor("#55FF0000"))
+            } else {
+                floatBtn.text = "F"
+                floatBtn.setBackgroundColor(Color.parseColor("#55000000"))
+            }
+        }
 
         val btnAkm = panel.findViewById<Button>(R.id.btnAkm)
         val btnM14 = panel.findViewById<Button>(R.id.btnM14)
         val btnStop = panel.findViewById<Button>(R.id.btnRec)
         val btnHide = panel.findViewById<Button>(R.id.btnHide)
 
-        btnAkm.setOnClickListener {
-            TouchAccessibilityService.instance?.toggleAuto(Gun.AKM)
-            btnAkm.text = if (btnAkm.text == "AKM HOLD") "AKM ON" else "AKM HOLD"
-        }
-
-        btnM14.setOnClickListener {
-            TouchAccessibilityService.instance?.toggleAuto(Gun.M14)
-            btnM14.text = if (btnM14.text == "M14 HOLD") "M14 ON" else "M14 HOLD"
-        }
-
+        btnAkm.setOnClickListener { TouchAccessibilityService.instance?.toggleAuto(Gun.AKM) }
+        btnM14.setOnClickListener { TouchAccessibilityService.instance?.toggleAuto(Gun.M14) }
+        
         btnStop.setOnClickListener {
             TouchAccessibilityService.instance?.stopAuto()
-            btnAkm.text = "AKM HOLD"
-            btnM14.text = "M14 HOLD"
+            floatBtn.text = "F"
+            floatBtn.setBackgroundColor(Color.parseColor("#55000000"))
         }
-
+        
         btnHide.setOnClickListener {
             panel.visibility = View.GONE
         }
     }
 
-    private fun makeDraggable() {
+    private fun makeDraggable(view: View, layoutParams: WindowManager.LayoutParams) {
         var initialX = 0; var initialY = 0
         var touchX = 0f; var touchY = 0f
 
-        panel.setOnTouchListener { _, event ->
+        view.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    initialX = params.x; initialY = params.y
+                    initialX = layoutParams.x; initialY = layoutParams.y
                     touchX = event.rawX; touchY = event.rawY
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    params.x = initialX + (event.rawX - touchX).toInt()
-                    params.y = initialY + (event.rawY - touchY).toInt()
-                    wm.updateViewLayout(panel, params)
+                    layoutParams.x = initialX + (event.rawX - touchX).toInt()
+                    layoutParams.y = initialY + (event.rawY - touchY).toInt()
+                    wm.updateViewLayout(view, layoutParams)
                     true
                 }
                 else -> false
