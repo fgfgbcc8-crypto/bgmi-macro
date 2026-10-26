@@ -46,16 +46,28 @@ class OverlayService : Service() {
         wm.addView(panel, params)
         makeDraggable()
 
-        panel.findViewById<Button>(R.id.btnAkm).setOnClickListener {
-            TouchAccessibilityService.instance?.startRecoil(Gun.AKM)
+        val btnAkm = panel.findViewById<Button>(R.id.btnAkm)
+        val btnM14 = panel.findViewById<Button>(R.id.btnM14)
+        val btnStop = panel.findViewById<Button>(R.id.btnRec)
+        val btnHide = panel.findViewById<Button>(R.id.btnHide)
+
+        btnAkm.setOnClickListener {
+            TouchAccessibilityService.instance?.toggleAuto(Gun.AKM)
+            btnAkm.text = if (btnAkm.text == "AKM HOLD") "AKM ON" else "AKM HOLD"
         }
-        panel.findViewById<Button>(R.id.btnM14).setOnClickListener {
-            TouchAccessibilityService.instance?.startRecoil(Gun.M14)
+
+        btnM14.setOnClickListener {
+            TouchAccessibilityService.instance?.toggleAuto(Gun.M14)
+            btnM14.text = if (btnM14.text == "M14 HOLD") "M14 ON" else "M14 HOLD"
         }
-        panel.findViewById<Button>(R.id.btnRec).setOnClickListener {
-            TouchAccessibilityService.instance?.stopRecoil()
+
+        btnStop.setOnClickListener {
+            TouchAccessibilityService.instance?.stopAuto()
+            btnAkm.text = "AKM HOLD"
+            btnM14.text = "M14 HOLD"
         }
-        panel.findViewById<Button>(R.id.btnHide).setOnClickListener {
+
+        btnHide.setOnClickListener {
             panel.visibility = View.GONE
         }
     }
